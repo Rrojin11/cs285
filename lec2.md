@@ -117,4 +117,4 @@ output은 여전히 gaussian분포이고 input으로는 이미지 뿐만 아니�
 
 
 ### -Imitation learning: recap
-imitation learning 그 자체로 behavior clonging하는 것은 distribution mismatch 때문에 적절하지 않다. 하지만 때로는 nvidia paper에 의한 좌우 이미지 사용하는 등의 트릭을 사용하거나, stable trajectory distribution을 이용, DAgger등을 사용하면 잘 작동하기도한다. 혹은 모델 자체가 더 정교할 수도 있고, 이론상은 아니지만 실제로는 이러한 non-markovian policy나 multimodal을 위한 trick을 사용하면 잘 작동한다.   
+imitation learning 그 자체로 behavior clonging하는 것은 distribution mismatch 때문에 적절하지 않다. 하지만 때로는 nvidia paper에 의한 좌우 이미지 사용하는 등의 트릭을 사용하거나, stable trajectory distribution을 이용, DAgger등을 사용하면 잘 작동하기도한다. 혹은 모델 자체가 더 정교할 수도 있고, 이론상은 아니지만 실제로는 마지막에서 언급한 non-markovian policy나 multimodal을 위한 trick을 사용하면 잘 작동할 수도 있다.   
