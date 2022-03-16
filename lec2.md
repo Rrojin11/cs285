@@ -118,3 +118,18 @@ output은 여전히 gaussian분포이고 input으로는 이미지 뿐만 아니�
 
 ### -Imitation learning: recap
 imitation learning 그 자체로 behavior clonging하는 것은 distribution mismatch 때문에 적절하지 않다. 하지만 때로는 nvidia paper에 의한 좌우 이미지 사용하는 등의 트릭을 사용하거나, stable trajectory distribution을 이용, DAgger등을 사용하면 잘 작동하기도한다. 혹은 모델 자체가 더 정교할 수도 있고, 이론상은 아니지만 실제로는 마지막에서 언급한 non-markovian policy나 multimodal을 위한 trick을 사용하면 잘 작동할 수도 있다.   
+
+
+## Part3
+### Case study1 : trail following as classification
+imitation learning을 적용한 로보틱스 실사례 연구 "A Machine Learning Approach to Visual Perception of Forest Trails for Mobile Robots"를 살펴볼 것이다. 해당 연구의 목표는 쿼드콥터(quadrotor)가 숲속을 이동하는 것이다. 이때 도전 과제로는, 시스템을 훈련하기 위해 데이터를 모아야하며, distributional shifht 때문에 error가 축적되는 stability 문제를 해결해야한다. 이를 위해선 DAgger와 같은 원칙적인 접근을 하거나, 아니면 heuristic한 방법으로 해결해야한다. 연구에서는 쿼드콥터 주행 시스템을 분류 문제로 접근하였고, 쿼드콥터가 좌회전, 직진, 우회전으로 discrete actions을 취하도록 하였다. 그렇다면, 데이터는 어디서 오는가. 쿼드콥터를 오랫동안 운전하는 것은 배터리 문제가 있기 떄문에 대신 사람이 직접 데이터를 모은다. 사람이 숲을 거닐면서 데이터를 모으고, 그 이미지 데이터를 사용해서 크기가 큰 분류기 모델을 학습시킨다. 이때 앞선 NVDIA의 자동차 연구와 동일하게 상단과 좌측, 우측 3개의 카메라를 머리에 장착하여 이미지를 모은다. 좌측 이미지는 우회전으로 labeling되고, 우측 이미지는 좌회전으로, 상단의 이미지는 직진으로 labeling된다. 해당 이미지로 학습된 쿼드코터는 숲을 잘 이동할 수 있었다. 
+<p align= 'center'>
+<img src = './img/7.png' width = "400">
+</p>     
+
+
+## Part4
+### Issue of imitation learning
+#### 사람이 직접 방대한 양의 데이터 제공 /기계는 자동으로 학습 불가
+imitation learning에서는 기계가 어떻게 작동해야하는지 알려주기위해 사람이 데이터를 제공해야한다. 이것은 사람이 운전을 하는 것처럼 쉬울 수 있지만 다른 문제의 경우 어려울 수도 있다. 또한 딥러닝은 엄청난 양의 데이터가 존재할 때 학습이 잘 되는데, deep imitation learing을 하는 경우, 사람이 직접 방대한 양의 데이터를 모아야한다. part3에서 언급한 연구와 같이 오솔길을 따라 걸어가며 데이터를 얻는 것은 쉬울 수 있겠지만, 사람이 수동으로 쿼드콥터의 속도를 조절하거나, humanoid로봇과 같이 고차원의 시스템의 actions들을 다 명시하는 것은 매우 어려운 일이다. 더나아가, 전자상거래 회사의 가격을 결정하는 것은 여러 곳의 데이터를 참고해야만 하므로 사람이 직접 최적에 가까운 actio을 결정하는 것은 더더욱 어려운 일이다. 또한, 사람은 자동으로 학습할 수 있는데, 기계도 사람이 어느정도 설명을 덧붙여줬을 떄 자동으로 학습할 수 있으면 좋지 않을까. 사람은 스스로 학습하기 떄문에 개인적인 경험에 기반하여 스스로 무제한의 데이터를 얻을 수 있고, 특정 작업을 반복할 수록 더 잘하게 된다. 바로 그것이 강화학습의 목표이다. 그것이 가능하기 위해선 우선 우리의 목표를 정의해야한다. observation과 aciton을 매핑하기까지의 용어는 정의하였지만, 좋은 매핑이 무엇이고 나쁜 매핑이 무엇인지는 정의하지 않았다. 앞선 호랑이 예시에서 보면 최종 목적은 호랑이에게 먹히지 않는 것이다. $\delta$함수의 기댓값으로 정의해 볼 수 있는데, <center>$\underset{\theta}{\operatorname{min}} E_{a\sim\pi_{\theta}(a|s), s'\sim p(s'|s,a)}[\delta(s' = \text{eaten  by  tiger})]$ </center>
+$\delta$함수는 잡아먹히면 1, 나머지 경우는 0을 의미하고 이 함수를 최소화 해야한다. 기댓값은 states들의 distribution이고, policy와 transition probability에 의해 결정된다. 조금 더 일반화 한 수식은 다음과 같다. <center>$\underset{\theta}{\operatorname{min}} E_{s_1:T, a_1:T}[\sum_{t}\delta(s_t = \text{eaten by tiger})]$ <center>$\underset{\theta}{\operatorname{min}} E_{s_1:T, a_1:T}[\sum_{t}c(s_t,a_t)]$ <center> $c(s_t,a_t) = \text{cost function     } r(s_t,a_t) = \text{reward function}$
