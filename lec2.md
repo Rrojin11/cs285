@@ -66,12 +66,14 @@ DAgger가 잘 작동한다면 imitation learning에 왜 항상 사용되지 않�
 만약에 모델이 너무 좋아서 애초에 drifting 문제가 없다면 어떠한가. <mark style='background-color: #dcffe4'>[이해: part1에서 모델을 완벽히 만드는게 어렵다고 말하고 대신 데이터를 변경했음. 추가로 $D_\pi$ 를 만들어서 distribution drifting이 발생하는 거 방지함.]</mark> 모델이 정교해서 
  $p_{data}(o_t)$에서 많이 벗어나지 않는다면 어떠한가. 그러기 위해선 overfitting되지 않은 상태에서 전문가의 행동을 최대한 잘 따라해야한다. DAgger가 가지고 있는 이론적인 보장은 부족하더라도 이를 구현하기 위한 몇가지 방법이 있긴하다. <mark style='background-color: #ffd33d'> [질문: 이 해석 방향이 맞음??? ] </mark>
 
- ### 왜 우리의 모델이 expert data에 정확히 맞추기 어려운가. <mark style='background-color: #ffd33d'> [질문: 왜 맞추기 어려운지 이유를 알아낸 다음 그걸 개선해나가자는 거지???] </mark>
+ ### 왜 우리의 모델이 expert data에 정확히 맞추기 어려운가. 
+ <mark style='background-color: #ffd33d'> [질문: 왜 맞추기 어려운지 이유를 알아낸 다음 그걸 개선해나가자는 거지???] </mark>
+
  이를 위해서 우리가 무엇을 할 수 있는 지 알아내기 위해선, 우선 왜 우리가 expert data를 따라하길 실패하며 model이 완벽해질 수 없는지 이유를 알고 그 후 개선해봐야한다. 그 이유는 첫째 1), 아무리 observation이 fully markovian해서 observation이 state를 추론할 필요가 없더라도 여전히 사람의 behavior는 non-markovian할 것이다. 둘쨰 2)는 continuous action 상황이라면 demonstrator의 행동은 multimodal하기 때문이다. 인간은 여러개의 다른 선택지가 있을 때 반복적으로 일정한 하나의 선택지를 고르지 않을 것이다. 
 
 ###  - expert data에 정확히 맞추기 어려운 이유 1) Non-Markovian behavior
 
-markovian이라는 것은 policy가 $o_t$에만 의존한다는 것이다. 하지만 사람은 이렇게 행동하지 않는다. 사람이 동일한 것을 반복해서 2번 봤다하면, 두번째 상황에서는 첫번째 상황과 동일하게 행동하지 않을 것이다. 예를들어, 주행 중에 처음으로 다른 차가 확 끼어들었을떄의 대응과 그 뒤 같은 일이 반복되어 일어났을때의 대응이 다를 것이다. 따라서 optimal한 markovian 전략이 있다하더라도 control에 있어서 매 same state마다 same action을 취하는 것이 어렵고 즉, non-markovian할 것이다. 인간은 보통 이제까지의 history를 기반으로 $\pi_\theta(a_t|o_1, ..., o_t)$ 에 따라 행동을 결정한다. <mark style='background-color: #ffd33d'> [질문: 여기서의 맥락이 우리가 clone할려는 expert data자체 부터가 non-markovian하다? 그래서..?] </mark>
+markovian이라는 것은 policy가 $o_t$에만 의존한다는 것이다. 하지만 사람은 이렇게 행동하지 않는다. 사람이 동일한 것을 반복해서 2번 봤다하면, 두번째 상황에서는 첫번째 상황과 동일하게 행동하지 않을 것이다. 예를들어, 주행 중에 처음으로 다른 차가 확 끼어들었을떄의 대응과 그 뒤 같은 일이 반복되어 일어났을때의 대응이 다를 것이다. 따라서 optimal한 markovian 전략이 있다하더라도 control에 있어서 매 same state마다 same action을 취하는 것이 어렵고 즉, non-markovian할 것이다. 인간은 보통 이제까지의 history를 기반으로 $\pi_\theta(a_t|o_1, ..., o_t)$ 에 따라 행동을 결정한다. <mark style='background-color: #ffd33d'> [질문: 여기서의 맥락이 우리가 clone할려는 expert data자체 부터가 non-markovian하다? 그래서 애초에 expert data로 모델을 학습시킬 때 학습이 잘 안된다. 따라서 RNN등의 방법을 사용해야하는데, full information이 오히려 casual  ] </mark>
 
 ### 전체의 history를 어떻게 사용할 수 있을까.
 그렇다면, 전체 이미지의 history를 기반으로 aciton을 결정할 수 있을까. 거기에는 몇가지 제약이 있는데 첫째, 단순히 모든 이미지를 합친다면 시간에 따라 이미지 수가 달라져 input 수가 달라질 것이고 그것은 기존의 고정된 수의 input을 갖는 CNN에 적합하지 않다. 그리고 이미지가 너무 크다면 weight수가 너무 많을 것이다. 이 문제를 해결하기 위해서 RNN을 사용하는데, 가장 흔한 방법은 convolutional encoder(CNN)을 사용하여 이미지를 읽고 RNN state로 바꾸는 것이다. 그리고 RNN으로 임의 길이의 encoding sequence들을 current state로 encode하여 action을 결정한다. 실제로는 lstm cell을 사용하여 이 RNN을 다룬다. 실제 RNN, lstm은 non-markovian problem을 다루는데 효과적이다. 그래서 일부 weight를 공유하고 **<질문: 이건 RNN지식인 거 같긴한데 난 잘 모름 ㅠ >** 그 다음 RNN을 한다. 
